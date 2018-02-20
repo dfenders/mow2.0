@@ -1,0 +1,79 @@
+extends layout
+
+block content
+
+  div.container
+    div.row
+      div.twelve.columns
+        button#showForm.button-primary Add new
+
+    div.row
+      div#addNewForm.twelve.columns(style="display:none")
+
+        form#addDriverForm(action="/drivers/new" method="POST")
+          div.row
+            div.two.columns
+              label(for="driverNumberInput") Driver number
+              input#driverNumberInput.u-full-width(type="text" name="driverNumber" required)
+
+            div.three.columns
+              label(for="firstNameInput") First name
+              input#firstNameInput.u-full-width(type="text" name="firstName" required)
+
+            div.three.columns
+              label(for="lastNameInput") Last name
+              input#lastNameInput.u-full-width(type="text" name="lastName" required)
+
+            div.four.columns
+              label(for="emailInput") Email
+              input(class="u-full-width" type="email" id="emailInput" name="email")
+
+            div.twelve.columns
+              label(for="addressInput") Address
+              textarea#addressInput.u-full-width(name="address" required)
+
+            div.twelve.columns
+              input(type="submit")
+
+
+    div.row
+      div.twelve.columns
+        if (driver_list && driver_list.length > 0)
+          table.u-full-width
+            thead
+              tr
+                th Driver number
+                th Name
+                th Email
+                th
+            tbody
+              each driver in driver_list
+                tr
+                  td= driver.driverNumber
+                  td= driver.firstName + " " + driver.lastName
+                  td
+                    a(href=`mailto:`+driver.email)= driver.email
+                  td
+                    a(href="#") edit
+                    span &nbsp;/&nbsp;
+                    a(href="/drivers/delete/" + driver.id) delete
+        else
+          div No drivers
+
+  script(type="text/javascript").
+
+    $(function(){
+        $("#showForm").on("click", function(){
+            var $addNewForm = $("#addNewForm");
+            if($addNewForm.is(":hidden"))
+                $("#addNewForm").slideDown();
+            else
+                $("#addNewForm").slideUp();
+        });
+
+        $("input[type=checkbox]").on("click", function(){
+            $(this).parent().toggleClass("isSelected");
+            var count = $(this).parents('tr').find('input[type=checkbox]:checked').length;
+            $(this).parents('tr').find('span.count').text(count);
+        });
+    });

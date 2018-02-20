@@ -1,0 +1,212 @@
+extends layout
+
+block content
+
+  div.container
+    div.row
+      div.nine.columns
+        h3 Menu item
+        button#showForm-Menu.button-primary Add new
+
+        div.row
+          - var types = ["Meat","Vegetable","Dessert","Vegetarian"]
+          div#addNewForm-Menu.twelve.columns(style="display:none")
+
+            form#addMenuItem(action="/menu/new" method="POST")
+              div.row
+                div.two.columns
+                  - var days = moment.weekdays()
+                  label(for="dayInput") Day
+                  select#dayInput.u-full-width(name="day" required)
+                    for day in days
+                      option(value= day)= day
+
+                div.two.columns
+                  label(for="weekInput") Week number
+                  input#weekInput.u-full-width(type="text" name="week" required)
+
+              div.row
+                div.four.columns
+                  label(for="meatSelect") Meat
+                  select#meatSelect.u-full-width(name="meat" required)
+                    for item in food
+                      if item.type == 'Meat'
+                        option(value= item.name data-ingredients=item.ingredients)= item.name
+
+                div.four.columns
+                  label(for="alternativeSelect") Alternative
+                  select#alternativeSelect.u-full-width(name="alternative" required)
+                    for item in food
+                      if item.type == 'Meat'
+                        option(value= item.name data-ingredients=item.ingredients)= item.name
+
+                div.four.columns
+                  label(for="vegetarianSelect") Vegetarian
+                  select#vegetarianSelect.u-full-width(name="vegetarian" required)
+                    for item in food
+                      if item.type == 'Vegetarian'
+                        option(value= item.name data-ingredients=item.ingredients)= item.name
+
+              div.row
+                div.four.columns
+                  label(for="veg1Select") Vegetable 1
+                  select#veg1Select.u-full-width(name="vegetable" required)
+                    for item in food
+                      if item.type == 'Vegetable'
+                        option(value= item.name data-ingredients=item.ingredients)= item.name
+
+                div.four.columns
+                  label(for="veg2Select") Vegetable 2
+                  select#veg2Select.u-full-width(name="vegetable" required)
+                    for item in food
+                      if item.type == 'Vegetable'
+                        option(value= item.name data-ingredients=item.ingredients)= item.name
+
+                div.four.columns
+                  label(for="veg3Select") Vegetable 3
+                  select#veg3Select.u-full-width(name="vegetable" required)
+                    for item in food
+                      if item.type == 'Vegetable'
+                        option(value= item.name data-ingredients=item.ingredients)= item.name
+
+              div.row
+                div.four.columns
+                  label(for="dessertSelect") Dessert
+                  select#dessertSelect.u-full-width(name="dessert" required)
+                    for item in food
+                      if item.type == 'Dessert'
+                        option(value= item.name data-ingredients=item.ingredients)= item.name
+
+              div.row
+                div.twelve.columns
+                  input(type="hidden" name="ingredients")
+                  input(type="submit")
+
+      div.three.columns
+        h3 Food item
+        button#showForm-Food.button-primary Add new
+
+        div.row
+          div#addNewForm-Food.twelve.columns(style="display:none")
+
+            form#addFoodItem(action="/menu/food/new" method="POST")
+              div.row
+                div.twelve.columns
+                  label(for="foodNameInput") Name
+                  input#foodNameInput.u-full-width(type="text" name="name" required)
+
+                div.twelve.columns
+                  label(for="foodTypeSelect") Type
+                  select#foodTypeSelect.u-full-width(name="type" required)
+                    for type in types
+                      option(value= type)= type
+
+                div.twelve.columns
+                  label(for="ingredientSelect") Ingredients
+                  select#ingredientSelect.u-full-width(name="ingredients" multiple)
+                    for ingredient in ingredient_list
+                      option(value= ingredient.name)= ingredient.name
+
+                div.twelve.columns
+                  input(type="submit")
+
+    div.row
+      div.twelve.columns
+        h3 Full menu
+    div.row
+      div.three.columns
+        label(for="datepicker") Menu weeks start
+        if weekStarts
+          input#datepicker(type="text" value= weekStarts)
+        else
+          input#datepicker(type="text")
+      div.nine.columns &nbsp;
+
+    div.row
+      div.twelve.columns
+        table.u-full-width
+          thead
+            th Week
+            th Day
+            th Date
+            th Meat/Main
+            th Sides/Vegetables
+            th Dessert
+            th Alternative
+            th Vegetarian
+            th
+          tbody
+            for m in menu
+              tr
+                td= m.week
+                td= m.day
+                td= moment(weekStarts, "D MMM YYYY").add(moment.weekdays().indexOf(m.day)+((m.week-1)*7),'days').format("D MMM YYYY")
+                td= m.meat
+                td= m.vegetable.replace(/,/g, ", ")
+                td= m.dessert
+                td= m.alternative
+                td= m.vegetarian
+                td edit/delete
+
+  script(src="/javascript/moment/moment.js")
+  script(src="/javascript/pikaday/pikaday.js")
+  script(type="text/javascript").
+
+    $(function(){
+
+        var picker = new Pikaday({
+          disableDayFn: function(date){
+                // Disable all days except Sunday
+                return (date.getDay() != 0);
+          },
+          format: 'D MMM YYYY',
+          field: document.getElementById('datepicker'),
+          onSelect: function(){
+            $.post("/settings/new", {weekStarts:this.getMoment().format('D MMM YYYY')}, function(response){
+
+            });
+          }
+        });
+
+        $("form#addMenuItem").on("submit", function(e){
+          //e.preventDefault();
+          //e.stopImmediatePropagation();
+          var self = $(this);
+          console.log(self.find("select").length);
+          var ingredients = [];
+          $.each(self.find("select"),function(){
+            var select = $(this).find("option:selected");
+            console.log(select);
+            var ingredient = select.data("ingredients");
+            console.log("ingredients",ingredient);
+            if(ingredient) {
+              ingredient = ingredient.split(",");
+              ingredient.forEach(function (item) {
+                if (ingredients.indexOf(item) == -1)
+                  ingredients.push(item);
+              });
+            }
+          });
+          console.log(ingredients);
+          $("input[name=ingredients]").val(ingredients.toString());
+        });
+
+        $("#showForm-Menu, #showForm-Food").on("click", function(){
+            var type = $(this).attr('id').split("-")[1];
+            var $addNewForm = $("#addNewForm-"+type);
+            if($addNewForm.is(":hidden"))
+                $addNewForm.slideDown();
+            else
+                $addNewForm.slideUp();
+        });
+
+        $("input[type=checkbox]").on("click", function(){
+            $(this).parent().toggleClass("isSelected");
+            var count = $(this).parents('tr').find('input[type=checkbox]:checked').length;
+            $(this).parents('tr').find('span.count').text(count);
+        });
+
+        $('select[multiple]').multiselect({
+          columns: 3
+        });
+    });
